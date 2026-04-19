@@ -162,6 +162,13 @@ td.cup-pick-logo .team-logo { width: 32px; height: 32px; }
   gap: 4px;
 }
 .series-badge .team-logo { width: 20px; height: 20px; }
+@media (min-width: 768px) {
+  .team-logo                    { width: 42px; height: 42px; }
+  td.cup-pick-logo .team-logo   { width: 48px; height: 48px; }
+  .series-badge .team-logo      { width: 36px; height: 36px; }
+  .matchup-header               { padding: 18px 22px; }
+  .matchup-teams                { font-size: 1.35rem; gap: 10px; }
+}
 .badge-upcoming { background: rgba(125,133,144,0.15); color: var(--text-muted); }
 .badge-live     { background: rgba(210,153,34,0.2);   color: var(--gold); }
 .badge-final    { background: rgba(63,185,80,0.15);   color: var(--green); }

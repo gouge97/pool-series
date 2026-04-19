@@ -259,7 +259,7 @@ function buildLeaderboard() {
   ranked.forEach((p, i) => {
     const s    = scores[p];
     const rank = i + 1;
-    const icon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
+    const icon = String(rank);
     const row  = el('tr', { class: `rank-${rank}` });
     const cupPick = picks.stanleyCupPick?.[p];
     const cupTd   = el('td', { class: 'cup-pick-logo' });
