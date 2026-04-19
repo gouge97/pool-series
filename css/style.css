@@ -121,6 +121,7 @@ table.lb tbody tr:hover { background: rgba(255,255,255,0.04); }
 
 td.player-name    { text-align: left; font-weight: 600; }
 td.total-pts      { font-weight: 800; font-size: 1.1rem; color: var(--accent); }
+td.projected-pts  { font-weight: 800; font-size: 1.1rem; color: var(--gold); }
 td.sc-earned      { color: var(--green); font-weight: 700; }
 td.cup-pick-logo  { text-align: center; }
 td.cup-pick-logo .team-logo { width: 32px; height: 32px; }
@@ -137,11 +138,6 @@ td.cup-pick-logo .team-logo { width: 32px; height: 32px; }
   padding: 13px 16px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .matchup-teams {
   font-weight: 700;
@@ -161,7 +157,11 @@ td.cup-pick-logo .team-logo { width: 32px; height: 32px; }
   font-weight: 600;
   padding: 3px 11px;
   border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
+.series-badge .team-logo { width: 20px; height: 20px; }
 .badge-upcoming { background: rgba(125,133,144,0.15); color: var(--text-muted); }
 .badge-live     { background: rgba(210,153,34,0.2);   color: var(--gold); }
 .badge-final    { background: rgba(63,185,80,0.15);   color: var(--green); }
@@ -199,6 +199,7 @@ table.picks tr:hover { background: rgba(255,255,255,0.03); }
 .c-wrong   { color: var(--red); }
 .c-pts     { font-weight: 700; color: var(--green); }
 .c-pending { color: var(--text-muted); font-style: italic; }
+.c-prob    { color: var(--text-muted); }
 
 /* ── Misc ────────────────────────────────────── */
 .empty-msg {

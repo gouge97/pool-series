@@ -17,7 +17,7 @@ const ROUND_NAMES = {
   4: 'Finale de la Coupe Stanley',
 };
 
-let G = { config: null, picks: null, nhl: null, scores: null };
+let G = { config: null, picks: null, nhl: null, scores: null, standings: {} };
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 
@@ -45,6 +45,8 @@ async function init() {
     showError('Les données NHL en direct sont indisponibles — les choix sont affichés sans résultats en temps réel.');
   }
 
+  G.standings = await fetchStandings();
+
   G.scores = computeScores();
   render();
   document.getElementById('pool-title').textContent = G.config.poolName;
@@ -57,6 +59,29 @@ async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
   return r.json();
+}
+
+async function fetchStandings() {
+  try {
+    const url = `${API_BASE}/standings/now`;
+    let data;
+    try { data = await fetchJSON(url); }
+    catch { data = await fetchJSON(`https://corsproxy.io/?${encodeURIComponent(url)}`); }
+    const map = {};
+    for (const t of data.standings ?? []) {
+      const abbrev = t.teamAbbrev?.default ?? t.teamAbbrev ?? '';
+      const w  = t.wins     ?? 0;
+      const l  = t.losses   ?? 0;
+      const ot = t.otLosses ?? 0;
+      const gp = w + l + ot;
+      if (abbrev) map[abbrev] = gp > 0 ? w / gp : 0.5;
+    }
+    console.log('[Standings]', map);
+    return map;
+  } catch (e) {
+    console.warn('[Standings] Fetch failed:', e.message);
+    return {};
+  }
 }
 
 async function fetchNHL(season) {
@@ -99,6 +124,13 @@ function normalizeNHL(raw) {
   return out;
 }
 
+function getMatchupWins(series, matchup) {
+  if (!series) return [0, 0];
+  return series.team1 === matchup.team1
+    ? [series.team1Wins, series.team2Wins]
+    : [series.team2Wins, series.team1Wins];
+}
+
 function findSeries(roundNum, team1, team2) {
   return (G.nhl.rounds[roundNum] || []).find(s =>
     (s.team1 === team1 && s.team2 === team2) ||
@@ -106,13 +138,51 @@ function findSeries(roundNum, team1, team2) {
   ) ?? null;
 }
 
+// ── Probability helpers ────────────────────────────────────────────────────────
+
+function perGameProb(t1, t2) {
+  const s1 = G.standings[t1] ?? 0.5;
+  const s2 = G.standings[t2] ?? 0.5;
+  return (s1 + s2) > 0 ? s1 / (s1 + s2) : 0.5;
+}
+
+function comb(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return r;
+}
+
+// P(team with w1 wins beats team with w2 wins to finish series), per-game win prob p
+function seriesWinProb(w1, w2, p) {
+  const n1 = 4 - w1, n2 = 4 - w2;
+  if (n1 <= 0) return 1;
+  if (n2 <= 0) return 0;
+  let prob = 0;
+  for (let k = 0; k < n2; k++)
+    prob += comb(n1 + k - 1, k) * Math.pow(p, n1) * Math.pow(1 - p, k);
+  return prob;
+}
+
+// P(team1 wins series AND series ends in exactly totalGames total games)
+function seriesExactProb(w1, w2, p, totalGames) {
+  const n1   = 4 - w1;
+  const more = totalGames - w1 - w2;
+  const k    = more - n1;
+  if (more < n1 || k < 0 || k >= 4 - w2) return 0;
+  return comb(more - 1, k) * Math.pow(p, n1) * Math.pow(1 - p, k);
+}
+
+function pct(p) { return Math.round(p * 100) + '%'; }
+
 // ── Score computation ──────────────────────────────────────────────────────────
 
 function computeScores() {
   const { config, picks } = G;
   const scores = {};
   for (const p of config.participants)
-    scores[p] = { total: 0, byRound: { 1: 0, 2: 0, 3: 0, 4: 0 }, scBonus: 0 };
+    scores[p] = { total: 0, byRound: { 1: 0, 2: 0, 3: 0, 4: 0 }, scBonus: 0, expected: 0 };
 
   for (let r = 1; r <= 4; r++) {
     const pts   = ROUND_PTS[r];
@@ -122,15 +192,23 @@ function computeScores() {
     for (let i = 0; i < seriesList.length; i++) {
       const matchup = seriesList[i];
       const series  = findSeries(r, matchup.team1, matchup.team2);
-      if (!series?.isComplete) continue;
       for (const p of config.participants) {
         const pick = round.picks?.[p]?.[i];
         if (!pick) continue;
-        let earned = 0;
-        if (pick.winner === series.winner)     earned += pts.w;
-        if (pick.games  === series.totalGames) earned += pts.g;
-        scores[p].byRound[r] += earned;
-        scores[p].total      += earned;
+        if (series?.isComplete) {
+          let earned = 0;
+          if (pick.winner === series.winner)     earned += pts.w;
+          if (pick.games  === series.totalGames) earned += pts.g;
+          scores[p].byRound[r] += earned;
+          scores[p].total      += earned;
+        } else {
+          const [mt1W, mt2W] = getMatchupWins(series, matchup);
+          const pgp  = perGameProb(matchup.team1, matchup.team2);
+          const isT1 = pick.winner === matchup.team1;
+          const [a, b, q] = isT1 ? [mt1W, mt2W, pgp] : [mt2W, mt1W, 1 - pgp];
+          scores[p].expected += seriesWinProb(a, b, q) * pts.w
+                              + seriesExactProb(a, b, q, pick.games) * pts.g;
+        }
       }
     }
   }
@@ -145,6 +223,9 @@ function computeScores() {
       }
     }
   }
+
+  for (const p of config.participants)
+    scores[p].totalExpected = scores[p].total + scores[p].expected;
 
   return scores;
 }
@@ -164,13 +245,13 @@ function buildLeaderboard() {
   const section = el('section', { id: 'tab-leaderboard', class: 'tab-content active' });
   section.appendChild(el('h2', {}, 'Classement'));
 
-  const ranked = [...config.participants].sort((a, b) => scores[b].total - scores[a].total);
+  const ranked = [...config.participants].sort((a, b) => scores[b].totalExpected - scores[a].totalExpected);
 
   const wrap  = el('div', { class: 'lb-wrap' });
   const table = el('table', { class: 'lb' });
 
   const hRow = el('tr');
-  ['#', 'Participant', 'R1', 'R2', 'FC', 'Finale', 'Choix Coupe', 'Total']
+  ['#', 'Participant', 'R1', 'R2', 'FC', 'Finale', 'Choix Coupe', 'Total', 'Projeté']
     .forEach(h => hRow.appendChild(el('th', {}, h)));
   table.appendChild(el('thead')).appendChild(hRow);
 
@@ -194,6 +275,7 @@ function buildLeaderboard() {
       el('td', {}, s.byRound[4]),
       cupTd,
       el('td', { class: 'total-pts' }, s.total),
+      el('td', { class: 'projected-pts' }, s.expected > 0 ? s.totalExpected.toFixed(1) : s.total),
     ].forEach(c => row.appendChild(c));
     tbody.appendChild(row);
   });
@@ -225,54 +307,72 @@ function buildMatchupCard(matchup, roundNum, matchupIndex) {
   const round  = picks.rounds?.[roundNum];
   const series = findSeries(roundNum, matchup.team1, matchup.team2);
   const pts    = ROUND_PTS[roundNum];
+  const done   = series?.isComplete ?? false;
 
   const card = el('div', { class: 'matchup-card' });
-
-  // ── header
   const hdr  = el('div', { class: 'matchup-header' });
-  const teams = el('div', { class: 'matchup-teams' });
-  teams.appendChild(logoImg(matchup.team1));
-  teams.appendChild(document.createTextNode(' ' + matchup.team1 + ' vs '));
-  teams.appendChild(logoImg(matchup.team2));
-  teams.appendChild(document.createTextNode(' ' + matchup.team2));
-  hdr.appendChild(teams);
   hdr.appendChild(statusBadge(series, matchup));
   card.appendChild(hdr);
 
-  // ── picks rows
-  const rows = config.participants.map(p => {
-    const pick = round?.picks?.[p]?.[matchupIndex];
-    let wOk = null, gOk = null, wPts = 0, gPts = 0;
-    if (pick && series?.isComplete) {
-      wOk  = pick.winner === series.winner;
-      gOk  = pick.games  === series.totalGames;
-      wPts = wOk ? pts.w : 0;
-      gPts = gOk ? pts.g : 0;
+  const [mt1W, mt2W] = getMatchupWins(series, matchup);
+  const pgp = perGameProb(matchup.team1, matchup.team2);
+
+  const rows = config.participants.map(name => {
+    const pick = round?.picks?.[name]?.[matchupIndex];
+    let wOk = null, gOk = null, total = 0, pWin = null, pPerf = null, expPts = null;
+    if (pick) {
+      if (done) {
+        wOk   = pick.winner === series.winner;
+        gOk   = pick.games  === series.totalGames;
+        total = (wOk ? pts.w : 0) + (gOk ? pts.g : 0);
+      } else {
+        const isT1 = pick.winner === matchup.team1;
+        const [a, b, q] = isT1 ? [mt1W, mt2W, pgp] : [mt2W, mt1W, 1 - pgp];
+        pWin   = seriesWinProb(a, b, q);
+        pPerf  = seriesExactProb(a, b, q, pick.games);
+        expPts = pWin * pts.w + pPerf * pts.g;
+      }
     }
-    return { p, pick, wOk, gOk, total: wPts + gPts, done: series?.isComplete };
-  }).sort((a, b) => b.total - a.total);
+    return { name, pick, wOk, gOk, total, pWin, pPerf, expPts };
+  }).sort((a, b) => done ? b.total - a.total : (b.expPts ?? -1) - (a.expPts ?? -1));
 
   const wrap  = el('div', { class: 'picks-wrap' });
   const table = el('table', { class: 'picks' });
   const hRow  = el('tr');
-  ['Participant', 'Vainqueur', 'Matchs', 'Pts'].forEach(h => hRow.appendChild(el('th', {}, h)));
+  const baseHeaders = done
+    ? ['Participant', 'Vainqueur', 'Matchs']
+    : ['Participant', 'Vainqueur', 'Matchs', 'P(vict.)', 'P(parfait)'];
+  baseHeaders.forEach(h => hRow.appendChild(el('th', {}, h)));
+  const thProj = el('th');
+  const spP = el('span'); spP.style.color = 'var(--gold)';   spP.textContent = 'Projeté';
+  const spR = el('span'); spR.style.color = 'var(--accent)'; spR.textContent = 'Réalisé';
+  thProj.appendChild(spP);
+  thProj.appendChild(document.createTextNode('/'));
+  thProj.appendChild(spR);
+  hRow.appendChild(thProj);
   table.appendChild(el('thead')).appendChild(hRow);
 
   const tbody = el('tbody');
-  for (const { p, pick, wOk, gOk, total, done } of rows) {
+  for (const { name, pick, wOk, gOk, total, pWin, pPerf, expPts } of rows) {
     const row = el('tr');
-    row.appendChild(el('td', {}, p));
+    row.appendChild(el('td', {}, name));
     if (!pick) {
-      row.appendChild(el('td', { class: 'c-pending' }, '—'));
-      row.appendChild(el('td', { class: 'c-pending' }, '—'));
-      row.appendChild(el('td', { class: 'c-pending' }, '—'));
-    } else {
-      row.appendChild(el('td', { class: wOk === null ? '' : wOk ? 'c-ok' : 'c-wrong' }, pick.winner));
+      const cols = done ? 3 : 5;
+      for (let i = 0; i < cols; i++) row.appendChild(el('td', { class: 'c-pending' }, '—'));
+    } else if (done) {
+      const wtd = el('td', { class: wOk === null ? '' : wOk ? 'c-ok' : 'c-wrong' });
+      wtd.appendChild(logoImg(pick.winner));
+      row.appendChild(wtd);
       row.appendChild(el('td', { class: gOk === null ? '' : gOk ? 'c-ok' : 'c-wrong' }, pick.games));
-      row.appendChild(done
-        ? el('td', { class: total > 0 ? 'c-pts' : '' }, total)
-        : el('td', { class: 'c-pending' }, '—')
-      );
+      row.appendChild(el('td', { class: 'total-pts' }, total));
+    } else {
+      const wtd = el('td');
+      wtd.appendChild(logoImg(pick.winner));
+      row.appendChild(wtd);
+      row.appendChild(el('td', {}, pick.games));
+      row.appendChild(el('td', { class: 'c-prob' }, pct(pWin)));
+      row.appendChild(el('td', { class: 'c-prob' }, pct(pPerf)));
+      row.appendChild(el('td', { class: 'projected-pts' }, expPts.toFixed(1)));
     }
     tbody.appendChild(row);
   }
@@ -283,17 +383,26 @@ function buildMatchupCard(matchup, roundNum, matchupIndex) {
 }
 
 function statusBadge(series, matchup) {
-  let text, cls;
+  const badge = document.createElement('span');
+
   if (!series || (!series.isComplete && series.team1Wins === 0 && series.team2Wins === 0)) {
-    text = 'À venir'; cls = 'badge-upcoming';
+    badge.className = 'series-badge badge-upcoming';
+    badge.appendChild(logoImg(matchup.team1));
+    badge.appendChild(document.createTextNode(' 0–0 '));
+    badge.appendChild(logoImg(matchup.team2));
   } else if (series.isComplete) {
-    text = `${series.winner} en ${series.totalGames} matchs`; cls = 'badge-final';
+    badge.className = 'series-badge badge-final';
+    badge.appendChild(logoImg(series.winner));
+    badge.appendChild(document.createTextNode(` en ${series.totalGames} matchs`));
   } else {
     const w1 = series.team1 === matchup.team1 ? series.team1Wins : series.team2Wins;
     const w2 = series.team1 === matchup.team1 ? series.team2Wins : series.team1Wins;
-    text = `${matchup.team1} ${w1}–${w2} ${matchup.team2}`; cls = 'badge-live';
+    badge.className = 'series-badge badge-live';
+    badge.appendChild(logoImg(matchup.team1));
+    badge.appendChild(document.createTextNode(` ${w1}–${w2} `));
+    badge.appendChild(logoImg(matchup.team2));
   }
-  return el('span', { class: `series-badge ${cls}` }, text);
+  return badge;
 }
 
 function logoImg(abbrev) {
