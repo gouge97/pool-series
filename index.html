@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pool des Séries</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1 id="pool-title">Pool des Séries</h1>
+    <div id="last-updated" class="subtitle"></div>
+  </header>
+
+  <nav id="tab-nav">
+    <button class="tab-btn active" data-tab="leaderboard">Classement</button>
+    <button class="tab-btn" data-tab="1">Ronde 1</button>
+    <button class="tab-btn" data-tab="2">Ronde 2</button>
+    <button class="tab-btn" data-tab="3">Finales de conf.</button>
+    <button class="tab-btn" data-tab="4">Finale de la Coupe</button>
+  </nav>
+
+  <main id="app">
+    <div id="loading">Loading live data…</div>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

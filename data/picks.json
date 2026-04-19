@@ -1,0 +1,89 @@
+{
+  "stanleyCupPick": {
+    "Martin":     "DAL",
+    "Julien":     "DAL",
+    "Philippe":   "COL",
+    "Maxime":     "COL",
+    "Michaël":    "COL",
+    "Marc-André": "MTL"
+  },
+  "rounds": {
+    "1": {
+      "series": [
+        { "team1": "BUF", "team2": "BOS" },
+        { "team1": "TBL", "team2": "MTL" },
+        { "team1": "CAR", "team2": "OTT" },
+        { "team1": "PIT", "team2": "PHI" },
+        { "team1": "COL", "team2": "LAK" },
+        { "team1": "DAL", "team2": "MIN" },
+        { "team1": "VGK", "team2": "UTA" },
+        { "team1": "EDM", "team2": "ANA" }
+      ],
+      "picks": {
+        "Martin": [
+          { "winner": "BOS", "games": 7 },
+          { "winner": "MTL", "games": 7 },
+          { "winner": "CAR", "games": 6 },
+          { "winner": "PIT", "games": 5 },
+          { "winner": "COL", "games": 5 },
+          { "winner": "DAL", "games": 6 },
+          { "winner": "VGK", "games": 6 },
+          { "winner": "EDM", "games": 6 }
+        ],
+        "Julien": [
+          { "winner": "BUF", "games": 6 },
+          { "winner": "TBL", "games": 6 },
+          { "winner": "CAR", "games": 6 },
+          { "winner": "PHI", "games": 7 },
+          { "winner": "COL", "games": 5 },
+          { "winner": "DAL", "games": 5 },
+          { "winner": "UTA", "games": 7 },
+          { "winner": "EDM", "games": 5 }
+        ],
+        "Philippe": [
+          { "winner": "BUF", "games": 4 },
+          { "winner": "MTL", "games": 6 },
+          { "winner": "CAR", "games": 7 },
+          { "winner": "PIT", "games": 7 },
+          { "winner": "COL", "games": 4 },
+          { "winner": "DAL", "games": 6 },
+          { "winner": "VGK", "games": 6 },
+          { "winner": "EDM", "games": 5 }
+        ],
+        "Maxime": [
+          { "winner": "BUF", "games": 6 },
+          { "winner": "MTL", "games": 7 },
+          { "winner": "OTT", "games": 6 },
+          { "winner": "PIT", "games": 7 },
+          { "winner": "COL", "games": 4 },
+          { "winner": "DAL", "games": 6 },
+          { "winner": "VGK", "games": 7 },
+          { "winner": "ANA", "games": 6 }
+        ],
+        "Michaël": [
+          { "winner": "BUF", "games": 6 },
+          { "winner": "TBL", "games": 7 },
+          { "winner": "CAR", "games": 6 },
+          { "winner": "PIT", "games": 7 },
+          { "winner": "COL", "games": 4 },
+          { "winner": "MIN", "games": 7 },
+          { "winner": "VGK", "games": 6 },
+          { "winner": "EDM", "games": 5 }
+        ],
+        "Marc-André": [
+          { "winner": "BUF", "games": 7 },
+          { "winner": "MTL", "games": 6 },
+          { "winner": "CAR", "games": 6 },
+          { "winner": "PHI", "games": 7 },
+          { "winner": "COL", "games": 5 },
+          { "winner": "DAL", "games": 6 },
+          { "winner": "VGK", "games": 5 },
+          { "winner": "EDM", "games": 6 }
+        ]
+      }
+    },
+    "2": {},
+    "3": {},
+    "4": {}
+  }
+}
