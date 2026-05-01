@@ -197,8 +197,10 @@ function computeScores() {
         if (!pick) continue;
         if (series?.isComplete) {
           let earned = 0;
-          if (pick.winner === series.winner)     earned += pts.w;
-          if (pick.games  === series.totalGames) earned += pts.g;
+          if (pick.winner === series.winner) {
+            earned += pts.w;
+            if (pick.games === series.totalGames) earned += pts.g;
+          }
           scores[p].byRound[r] += earned;
           scores[p].total      += earned;
         } else {
