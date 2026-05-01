@@ -325,7 +325,7 @@ function buildMatchupCard(matchup, roundNum, matchupIndex) {
     if (pick) {
       if (done) {
         wOk   = pick.winner === series.winner;
-        gOk   = pick.games  === series.totalGames;
+        gOk   = wOk && pick.games === series.totalGames;
         total = (wOk ? pts.w : 0) + (gOk ? pts.g : 0);
       } else {
         const isT1 = pick.winner === matchup.team1;
