@@ -82,7 +82,52 @@
         ]
       }
     },
-    "2": {},
+    "2": {
+      "series": [
+        { "team1": "BUF", "team2": "MTL" },
+        { "team1": "CAR", "team2": "PHI" },
+        { "team1": "COL", "team2": "MIN" },
+        { "team1": "VGK", "team2": "ANA" }
+      ],
+      "picks": {
+        "Martin": [
+          { "winner": "BUF", "games": 0 },
+          { "winner": "CAR", "games": 0 },
+          { "winner": "COL", "games": 0 },
+          { "winner": "VGK", "games": 0 }
+        ],
+        "Julien": [
+          { "winner": "BUF", "games": 6 },
+          { "winner": "CAR", "games": 5 },
+          { "winner": "COL", "games": 7 },
+          { "winner": "VGK", "games": 6 }
+        ],
+        "Philippe": [
+          { "winner": "BUF", "games": 5 },
+          { "winner": "CAR", "games": 4 },
+          { "winner": "COL", "games": 7 },
+          { "winner": "VGK", "games": 6 }
+        ],
+        "Maxime": [
+          { "winner": "BUF", "games": 0 },
+          { "winner": "CAR", "games": 0 },
+          { "winner": "COL", "games": 0 },
+          { "winner": "VGK", "games": 0 }
+        ],
+        "Michaël": [
+          { "winner": "MTL", "games": 7 },
+          { "winner": "PHI", "games": 6 },
+          { "winner": "MIN", "games": 7 },
+          { "winner": "ANA", "games": 7 }
+        ],
+        "Marc-André": [
+          { "winner": "MTL", "games": 6 },
+          { "winner": "PHI", "games": 7 },
+          { "winner": "MIN", "games": 6 },
+          { "winner": "ANA", "games": 6 }
+        ]
+      }
+    },
     "3": {},
     "4": {}
   }
