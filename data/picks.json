@@ -109,10 +109,10 @@
           { "winner": "VGK", "games": 6 }
         ],
         "Maxime": [
-          { "winner": "BUF", "games": 0 },
-          { "winner": "CAR", "games": 0 },
-          { "winner": "COL", "games": 0 },
-          { "winner": "VGK", "games": 0 }
+          { "winner": "MTL", "games": 7 },
+          { "winner": "CAR", "games": 6 },
+          { "winner": "COL", "games": 6 },
+          { "winner": "ANA", "games": 6 }
         ],
         "Michaël": [
           { "winner": "MTL", "games": 7 },
