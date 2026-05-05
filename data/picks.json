@@ -91,10 +91,10 @@
       ],
       "picks": {
         "Martin": [
-          { "winner": "BUF", "games": 0 },
-          { "winner": "CAR", "games": 0 },
-          { "winner": "COL", "games": 0 },
-          { "winner": "VGK", "games": 0 }
+          { "winner": "MTL", "games": 6 },
+          { "winner": "CAR", "games": 5 },
+          { "winner": "COL", "games": 6 },
+          { "winner": "VGK", "games": 5 }
         ],
         "Julien": [
           { "winner": "BUF", "games": 6 },
